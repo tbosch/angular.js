@@ -1384,7 +1384,8 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
 
           isolateScope = scope.$new(true);
 
-          if (templateDirective && (templateDirective === newIsolateScopeDirective.$$originalDirective)) {
+          if (templateDirective &&
+            (!newIsolateScopeDirective.$$originalDirective || templateDirective === newIsolateScopeDirective.$$originalDirective)) {
             $linkNode.data('$isolateScope', isolateScope) ;
           } else {
             $linkNode.data('$isolateScopeNoTemplate', isolateScope);

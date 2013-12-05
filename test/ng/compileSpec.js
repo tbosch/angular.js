@@ -1434,6 +1434,22 @@ describe('$compile', function() {
                     iscope = scope;
                     log(scope.$id);
                     expect(element.data('$isolateScope')).toBe(scope);
+                    expect(element.data('$isolateScopeNoTemplate')).not.toBeDefined();
+                  };
+                }
+              };
+            });
+            directive('tiscope2' + uppercase(name), function(log) {
+              return {
+                scope: {},
+                restrict: 'CA',
+                template: '<a></a>',
+                compile: function() {
+                  return function (scope, element) {
+                    iscope = scope;
+                    log(scope.$id);
+                    expect(element.data('$isolateScope')).toBe(scope);
+                    expect(element.data('$isolateScopeNoTemplate')).not.toBeDefined();
                   };
                 }
               };
@@ -1644,12 +1660,20 @@ describe('$compile', function() {
             );
 
 
-            it('should return the isolate scope for children in directive template', inject(
+            it('should return the isolate scope for children in directive template loaded via url', inject(
               function($rootScope, $compile, $httpBackend) {
                 $httpBackend.expect('GET', 'tiscope.html').respond('<a></a>');
                 element = $compile('<div tiscope></div>')($rootScope);
                 expect(element.isolateScope()).toBeUndefined(); // this is the current behavior, not desired feature
                 $httpBackend.flush();
+                expect(element.find('a').scope()).toBe(element.isolateScope());
+                expect(element.isolateScope()).not.toBe($rootScope);
+              })
+            );
+
+            it('should return the isolate scope for children in directive template specified inline', inject(
+              function($rootScope, $compile) {
+                element = $compile('<div tiscope2></div>')($rootScope);
                 expect(element.find('a').scope()).toBe(element.isolateScope());
                 expect(element.isolateScope()).not.toBe($rootScope);
               })
