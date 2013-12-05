@@ -156,7 +156,7 @@ describe('form', function() {
 
   describe('preventing default submission', function() {
 
-    it('should prevent form submission', function() {
+    it('should prevent form submission', inject(function($compileInDoc) {
       var nextTurn = false,
           submitted = false,
           reloadPrevented;
@@ -173,7 +173,7 @@ describe('form', function() {
       // there in different order than in other browsers
       if (msie==8) addEventListenerFn(doc[0], 'submit', assertPreventDefaultListener);
 
-      $compile(doc)(scope);
+      $compileInDoc(doc)(scope);
 
       scope.submitMe = function() {
         submitted = true;
@@ -195,11 +195,11 @@ describe('form', function() {
         // prevent mem leak in test
         removeEventListenerFn(doc[0], 'submit', assertPreventDefaultListener);
       });
-    });
+    }));
 
 
     it('should prevent the default when the form is destroyed by a submission via a click event',
-        inject(function($timeout) {
+        inject(function($timeout, $compileInDoc) {
       doc = jqLite('<div>' +
                       '<form ng-submit="submitMe()">' +
                         '<button ng-click="destroy()"></button>' +
@@ -232,7 +232,7 @@ describe('form', function() {
       // there in different order than in other browsers
       if (msie == 8) addEventListenerFn(form[0], 'submit', assertPreventDefaultListener);
 
-      $compile(doc)(scope);
+      $compileInDoc(doc)(scope);
 
       if (msie != 8) addEventListenerFn(form[0], 'submit', assertPreventDefaultListener);
 

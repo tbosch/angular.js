@@ -878,6 +878,18 @@ describe('jqLite', function() {
       browserTrigger(a, 'click');
     });
 
+    it('should have event.isPropagationStopped method', function() {
+      jqLite(a).on('click', function(e) {
+        expect(function() {
+          expect(e.isPropagationStopped()).toBe(false);
+          e.stopPropagation();
+          expect(e.isPropagationStopped()).toBe(true);
+        }).not.toThrow();
+      });
+
+      browserTrigger(a, 'click');
+    });
+
     describe('mouseenter-mouseleave', function() {
       var root, parent, sibling, child, log;
 

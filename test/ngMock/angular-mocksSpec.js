@@ -1406,6 +1406,19 @@ describe('ngMock', function() {
       expect($rootElement.text()).toEqual('');
     }));
   });
+
+  describe('$compileInDoc', function() {
+    it('should add the element to $rootElement and that to the document.body after linking', inject(function($rootElement, $compileInDoc, $rootScope) {
+      var el = angular.element('<a></a>');
+      var link = $compileInDoc(el);
+      expect(el.parent().length).toBe(0);
+      expect($rootElement.parent().length).toBe(0);
+      link($rootScope);
+      expect(el.parent()[0]).toBe($rootElement[0]);
+      expect($rootElement.parent()[0]).toBe(document.body);
+    }));
+  });
+
 });
 
 

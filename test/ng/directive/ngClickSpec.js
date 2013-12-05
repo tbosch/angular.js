@@ -7,8 +7,8 @@ describe('ngClick', function() {
     dealoc(element);
   });
 
-  it('should get called on a click', inject(function($rootScope, $compile) {
-    element = $compile('<div ng-click="clicked = true"></div>')($rootScope);
+  it('should get called on a click', inject(function($rootScope, $compileInDoc) {
+    element = $compileInDoc('<div ng-click="clicked = true"></div>')($rootScope);
     $rootScope.$digest();
     expect($rootScope.clicked).toBeFalsy();
 
@@ -16,8 +16,8 @@ describe('ngClick', function() {
     expect($rootScope.clicked).toEqual(true);
   }));
 
-  it('should pass event object', inject(function($rootScope, $compile) {
-    element = $compile('<div ng-click="event = $event"></div>')($rootScope);
+  it('should pass event object', inject(function($rootScope, $compileInDoc) {
+    element = $compileInDoc('<div ng-click="event = $event"></div>')($rootScope);
     $rootScope.$digest();
 
     browserTrigger(element, 'click');

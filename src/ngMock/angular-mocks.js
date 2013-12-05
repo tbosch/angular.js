@@ -1683,6 +1683,22 @@ angular.mock.$RootElementProvider = function() {
   };
 };
 
+angular.mock.$CompileInDocProvider = function() {
+  this.$get = ['$compile', '$rootElement', function($compile, $rootElement) {
+    return function() {
+      var link = $compile.apply(this, arguments);
+      return function() {
+        if ($rootElement.parent().length === 0) {
+          document.body.appendChild($rootElement[0]);
+        }
+        var element = link.apply(this, arguments);
+        $rootElement.append(element);
+        return element;
+      };
+    };
+  }];
+};
+
 /**
  * @ngdoc overview
  * @name ngMock
@@ -1705,7 +1721,8 @@ angular.module('ngMock', ['ng']).provider({
   $log: angular.mock.$LogProvider,
   $interval: angular.mock.$IntervalProvider,
   $httpBackend: angular.mock.$HttpBackendProvider,
-  $rootElement: angular.mock.$RootElementProvider
+  $rootElement: angular.mock.$RootElementProvider,
+  $compileInDoc: angular.mock.$CompileInDocProvider
 }).config(['$provide', function($provide) {
   $provide.decorator('$timeout', angular.mock.$TimeoutDecorator);
 }]);
@@ -1922,14 +1939,17 @@ if(window.jasmine || window.mocha) {
   });
 
   afterEach(function() {
-    var injector = currentSpec.$injector;
+    var injector = currentSpec.$injector,
+        $rootElement;
 
     currentSpec.$injector = null;
     currentSpec.$modules = null;
     currentSpec = null;
 
     if (injector) {
-      injector.get('$rootElement').off();
+      $rootElement = injector.get('$rootElement');
+      $rootElement.off();
+      $rootElement.remove && $rootElement.remove();
       injector.get('$browser').pollFns.length = 0;
     }
 

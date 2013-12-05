@@ -40,22 +40,81 @@ forEach(
   'click dblclick mousedown mouseup mouseover mouseout mousemove mouseenter mouseleave keydown keyup keypress submit focus blur copy cut paste'.split(' '),
   function(name) {
     var directiveName = directiveNormalize('ng-' + name);
-    ngEventDirectives[directiveName] = ['$parse', function($parse) {
-      return {
-        compile: function($element, attr) {
-          var fn = $parse(attr[directiveName]);
-          return function(scope, element, attr) {
-            element.on(lowercase(name), function(event) {
-              scope.$apply(function() {
-                fn(scope, {$event:event});
+    ngEventDirectives[directiveName] = ['$parse', '$rootElement', function($parse, $rootElement) {
+      var usedAttrNames = {},
+        eventName = lowercase(name);
+
+      if (ngEventSupportsDelegation(eventName)) {
+        return delegateDirective();
+      }
+      return nonDelegateDirective();
+
+      function nonDelegateDirective() {
+        return {
+          compile: function($element, attr) {
+            var fn = $parse(attr[directiveName]);
+            return function(scope, element) {
+              element.on(eventName, function(event) {
+                scope.$apply(function() {
+                  fn(scope, {$event: event});
+                });
               });
-            });
-          };
+            };
+          }
+        };
+      }
+
+      function delegateDirective() {
+        $rootElement.on(eventName, eventHandler);
+
+        return {
+          compile: function($element, attr) {
+            // fill the $parse cache
+            $parse(attr[directiveName]);
+            usedAttrNames[attr.$attr[directiveName]] = true;
+          }
+        };
+      }
+
+      function eventHandler(event) {
+        var target = jqLite(event.target),
+            expression, scope;
+        while (target.length && !event.isPropagationStopped()) {
+          expression = findExpression(target);
+          if (expression) {
+            evalExpression(target.scope(), expression, event);
+          }
+          target = target.parent();
         }
-      };
+      }
+
+      function findExpression(element) {
+        var attrName, attrValue;
+        for (attrName in usedAttrNames) {
+          attrValue = element.attr(attrName);
+          if (attrValue) {
+            return attrValue;
+          }
+        }
+      }
+
+      function evalExpression(scope, expression, event) {
+        scope.$apply(function() {
+          $parse(expression)(scope, {$event: event});
+        });
+      }
     }];
   }
 );
+
+var IE8_NON_BUBBLE_EVENTS = {
+  focus: true, // TODO: we could use focusin instead
+  blur: true, // TODO: we could use focusout instead
+  submit: true
+};
+function ngEventSupportsDelegation(eventName) {
+  return !(msie <= 8 && IE8_NON_BUBBLE_EVENTS[eventName]);
+}
 
 /**
  * @ngdoc directive

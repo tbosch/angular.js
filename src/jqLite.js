@@ -631,6 +631,19 @@ function createEventHandler(element, events) {
       return event.defaultPrevented || event.returnValue === false;
     };
 
+    if (isUndefined(event.propagationStopped)) {
+      var stevent = event.stopPropagation;
+      event.stopPropagation = function() {
+        event.propagationStopped = true;
+        stevent.call(event);
+      };
+      event.propagationStopped = false;
+    }
+
+    event.isPropagationStopped = function() {
+      return event.propagationStopped;
+    };
+
     forEach(events[type || event.type], function(fn) {
       fn.call(element, event);
     });

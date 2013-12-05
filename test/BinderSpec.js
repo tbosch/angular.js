@@ -49,9 +49,9 @@ describe('Binder', function() {
     expect(element.text()).toBe('123');
   }));
 
-  it('InputTypeButtonActionExecutesInScope', inject(function($rootScope, $compile) {
+  it('InputTypeButtonActionExecutesInScope', inject(function($rootScope, $compileInDoc) {
     var savedCalled = false;
-    element = $compile(
+    element = $compileInDoc(
       '<input type="button" ng-click="person.save()" value="Apply">')($rootScope);
     $rootScope.person = {};
     $rootScope.person.save = function() {
@@ -61,9 +61,9 @@ describe('Binder', function() {
     expect(savedCalled).toBe(true);
   }));
 
-  it('InputTypeButtonActionExecutesInScope2', inject(function($rootScope, $compile) {
+  it('InputTypeButtonActionExecutesInScope2', inject(function($rootScope, $compileInDoc) {
     var log = "";
-    element = $compile('<input type="image" ng-click="action()">')($rootScope);
+    element = $compileInDoc('<input type="image" ng-click="action()">')($rootScope);
     $rootScope.action = function() {
       log += 'click;';
     };
@@ -72,9 +72,9 @@ describe('Binder', function() {
     expect(log).toEqual('click;');
   }));
 
-  it('ButtonElementActionExecutesInScope', inject(function($rootScope, $compile) {
+  it('ButtonElementActionExecutesInScope', inject(function($rootScope, $compileInDoc) {
     var savedCalled = false;
-    element = $compile('<button ng-click="person.save()">Apply</button>')($rootScope);
+    element = $compileInDoc('<button ng-click="person.save()">Apply</button>')($rootScope);
     $rootScope.person = {};
     $rootScope.person.save = function() {
       savedCalled = true;
@@ -351,8 +351,8 @@ describe('Binder', function() {
     module(function($exceptionHandlerProvider){
       $exceptionHandlerProvider.mode('log');
     });
-    inject(function($rootScope, $exceptionHandler, $compile) {
-      var input = $compile('<a ng-click="action()">Add Phone</a>')($rootScope);
+    inject(function($rootScope, $exceptionHandler, $compileInDoc) {
+      var input = $compileInDoc('<a ng-click="action()">Add Phone</a>')($rootScope);
       $rootScope.action = function() {
         throw new Error('MyError');
       };
