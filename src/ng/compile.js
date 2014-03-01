@@ -1799,12 +1799,17 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
       if (interpolateFn) {
         directives.push({
           priority: 0,
-          compile: valueFn(function textInterpolateLinkFn(scope, node) {
+          require: '^?dir',
+          compile: valueFn(function textInterpolateLinkFn(scope, node, attr, dirCtrl) {
             var parent = node.parent(),
-                bindings = parent.data('$binding') || [];
+                bindings = parent.data('$binding') || [],
+                textChanger = dirCtrl?  dirCtrl.createTextChanger(text) : null;
             bindings.push(interpolateFn);
             safeAddClass(parent.data('$binding', bindings), 'ng-binding');
             scope.$watch(interpolateFn, function interpolateFnWatchAction(value) {
+              if (textChanger) {
+                textChanger(value);
+              }
               node[0].nodeValue = value;
             });
           })
@@ -1843,9 +1848,10 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
 
       directives.push({
         priority: 100,
+        require: '?^dir',
         compile: function() {
             return {
-              pre: function attrInterpolatePreLinkFn(scope, element, attr) {
+              pre: function attrInterpolatePreLinkFn(scope, element, attr, dirCtrl) {
                 var $$observers = (attr.$$observers || (attr.$$observers = {}));
 
                 if (EVENT_HANDLER_ATTR_REGEXP.test(name)) {
@@ -1868,20 +1874,36 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
                 attr[name] = interpolateFn(scope);
 
                 ($$observers[name] || ($$observers[name] = [])).$$inter = true;
-                (attr.$$observers && attr.$$observers[name].$$scope || scope).
-                  $watch(interpolateFn, function interpolateFnWatchAction(newValue, oldValue) {
-                    //special case for class attribute addition + removal
-                    //so that class changes can tap into the animation
-                    //hooks provided by the $animate service. Be sure to
-                    //skip animations when the first digest occurs (when
-                    //both the new and the old values are the same) since
-                    //the CSS classes are the non-interpolated values
-                    if(name === 'class' && newValue != oldValue) {
-                      attr.$updateClass(newValue, oldValue);
-                    } else {
-                      attr.$set(name, newValue);
-                    }
+                var watchScope = (attr.$$observers && attr.$$observers[name].$$scope || scope);
+                if (dirCtrl) {
+                  watchScope.$watchCollection(function(scope) {
+                    return {
+                      dir: dirCtrl.dir,
+                      text: interpolateFn(scope)
+                    };
+                  }, function(newValue, oldValue) {
+                    interpolateFnWatchAction(newValue.text, oldValue.text);
                   });
+                } else {
+                  watchScope.$watch(interpolateFn, interpolateFnWatchAction);
+                }
+
+                function interpolateFnWatchAction(newValue, oldValue) {
+                  //special case for class attribute addition + removal
+                  //so that class changes can tap into the animation
+                  //hooks provided by the $animate service. Be sure to
+                  //skip animations when the first digest occurs (when
+                  //both the new and the old values are the same) since
+                  //the CSS classes are the non-interpolated values
+                  if(name === 'class' && newValue != oldValue) {
+                    attr.$updateClass(newValue, oldValue);
+                  } else {
+                    if (dirCtrl) {
+                      newValue = dirCtrl.escapeAttributeValue(element, name, newValue);
+                    }
+                    attr.$set(name, newValue);
+                  }
+                }
               }
             };
           }
